@@ -26,6 +26,11 @@ const getProductsList = new NodejsFunction(stack, 'GetProductsListLambda', {
   functionName: 'getProductsList',
   entry: 'src/handlers/get-products-list.ts',
 });
+const getProductsById = new NodejsFunction(stack, 'GetProductsByIdLambda', {
+  ...sharedLambdaProps,
+  functionName: 'getProductsById',
+  entry: 'src/handlers/get-products-by-id.ts',
+});
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
     allowHeaders: ['*'],
@@ -40,6 +45,14 @@ api.addRoutes({
     getProductsList,
   ),
   path: API_ROUTE,
+  methods: [apiGateway.HttpMethod.GET],
+});
+api.addRoutes({
+  integration: new HttpLambdaIntegration(
+    'GetProductsByIdIntegration',
+    getProductsById,
+  ),
+  path: `${API_ROUTE}/{productId}`,
   methods: [apiGateway.HttpMethod.GET],
 });
 
