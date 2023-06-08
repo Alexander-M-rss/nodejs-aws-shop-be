@@ -25,6 +25,18 @@ const sharedLambdaProps: Partial<NodejsFunctionProps> = {
     PG_USER: process.env.PG_USER || '',
     PG_PASSWORD: process.env.PG_PASSWORD || '',
   },
+  bundling: {
+    externalModules: [
+      'mysql',
+      'mysql2',
+      'better-sqlite3',
+      'sqlite3',
+      'tedious',
+      'pg-query-stream',
+      'better-sqlite3',
+      'oracledb',
+    ],
+  },
 };
 const getProductsList = new NodejsFunction(stack, 'GetProductsListLambda', {
   ...sharedLambdaProps,
