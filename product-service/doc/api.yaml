@@ -14,7 +14,7 @@ paths:
       tags:
         - Products
       summary: Get all available products
-      description: get arrays of all available products
+      description: Gets arrays of all available products
       operationId: getProductsList
       responses:
         '200':
@@ -25,6 +25,47 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AvailableProduct'
+    post:
+      tags:
+        - Products
+      summary: Create product
+      description: Creates product and returns created product
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              title: example
+              properties:
+                title:
+                  type: string
+                  example: The Pallbearer
+                description:
+                  type: string
+                  example: Comedy
+                price:
+                  type: number
+                  example: 72
+                count:
+                  type: number
+                  format: int64
+                  example: 1
+              required:
+                - title
+                - description
+                - price
+                - count
+      responses:
+        '201':
+          description: The product has been created
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/AvailableProduct'
+        '400':
+          description: Bad request. body does not contain required fields
   /products/{productId}:
     get:
       tags:
@@ -64,7 +105,7 @@ components:
         id:
           type: string
           format: uuid
-          example: '870ee3c1-54e4-49eb-bfc1-ed34afc9f005'
+          example: '7149181e-699f-44c3-95db-c6134ae8a8b6'
         title:
           type: string
           example: The Pallbearer
