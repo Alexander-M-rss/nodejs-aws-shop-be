@@ -7,6 +7,8 @@ import {
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
 import 'dotenv/config';
+import * as s3notifications from 'aws-cdk-lib/aws-s3-notifications';
+import { Dir } from './src/handlers/constants';
 
 const BUCKET_NAME = process.env.BUCKET_NAME || '';
 const IMPORT_AWS_REGION = process.env.IMPORT_AWS_REGION || 'eu-west-1';
@@ -51,6 +53,11 @@ const importProductsFile = new NodejsFunction(
     entry: 'src/handlers/import-products-file.ts',
   },
 );
+const importFileParser = new NodejsFunction(stack, 'ImportFileParserLambda', {
+  ...sharedLambdaProps,
+  functionName: 'importFileParser',
+  entry: 'src/handlers/import-file-parser.ts',
+});
 const api = new apiGateway.RestApi(stack, 'ImportApi', {
   defaultCorsPreflightOptions: {
     allowHeaders: ['*'],
@@ -65,3 +72,10 @@ api.root
   .addMethod('GET', new apiGateway.LambdaIntegration(importProductsFile), {
     requestParameters: { 'method.request.querystring.name': true },
   });
+bucket.grantReadWrite(importFileParser);
+bucket.grantDelete(importFileParser);
+bucket.addEventNotification(
+  s3.EventType.OBJECT_CREATED,
+  new s3notifications.LambdaDestination(importFileParser),
+  { prefix: Dir.UPLOADED },
+);
