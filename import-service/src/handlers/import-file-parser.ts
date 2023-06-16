@@ -14,7 +14,7 @@ export const handler = async (event: S3Event): Promise<void> => {
     const records = event.Records;
 
     if (!records.length) {
-      console.log('No event records have been found');
+      throw new Error('No event records have been found');
     }
 
     const client = new S3Client({
@@ -22,7 +22,7 @@ export const handler = async (event: S3Event): Promise<void> => {
     });
     const BUCKET_NAME = process.env.BUCKET_NAME || '';
 
-    for (const record of event.Records) {
+    for (const record of records) {
       const file = await client.send(
         new GetObjectCommand({
           Bucket: BUCKET_NAME,
