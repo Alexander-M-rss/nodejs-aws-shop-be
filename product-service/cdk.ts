@@ -9,6 +9,7 @@ import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-al
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import 'dotenv/config';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 const API_PATH = 'products';
 const API_ROUTE = `/${API_PATH}`;
@@ -32,6 +33,7 @@ const sharedLambdaProps: Partial<NodejsFunctionProps> = {
     PG_DB: process.env.PG_DB || '',
     PG_USER: process.env.PG_USER || '',
     PG_PASSWORD: process.env.PG_PASSWORD || '',
+    TOPIC_ARN: createProductTopic.topicArn,
   },
   bundling: {
     externalModules: [
@@ -61,6 +63,26 @@ const createProduct = new NodejsFunction(stack, 'CreateProductLambda', {
   functionName: 'createProduct',
   entry: 'src/handlers/create-product.ts',
 });
+const catalogBatchProcess = new NodejsFunction(
+  stack,
+  'CatalogBatchProcessLambda',
+  {
+    ...sharedLambdaProps,
+    functionName: 'catalogBatchProcess',
+    entry: 'src/handlers/catalog-batch-process.ts',
+  },
+);
+
+catalogBatchProcess.addEventSource(
+  new SqsEventSource(catalogItemsQueue, { batchSize: 5 }),
+);
+createProductTopic.grantPublish(catalogBatchProcess);
+new sns.Subscription(stack, 'PrimarySubscription', {
+  endpoint: process.env.PRIMARY_EMAIL || '',
+  protocol: sns.SubscriptionProtocol.EMAIL,
+  topic: createProductTopic,
+});
+
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
     allowHeaders: ['*'],
@@ -96,4 +118,8 @@ api.addRoutes({
 
 new cdk.CfnOutput(stack, 'ApiUrl', {
   value: `${api.url}${API_PATH}` ?? 'Something went wrong with the deployment.',
+});
+
+new cdk.CfnOutput(stack, 'CatalogItemsQueueArn', {
+  value: catalogItemsQueue.queueArn,
 });
