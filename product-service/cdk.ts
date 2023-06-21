@@ -6,6 +6,8 @@ import {
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import 'dotenv/config';
 
 const API_PATH = 'products';
@@ -15,6 +17,12 @@ const stack = new cdk.Stack(app, 'ProductServiceStack', {
   env: {
     region: process.env.PRODUCT_AWS_REGION || 'eu-west-1',
   },
+});
+const catalogItemsQueue = new sqs.Queue(stack, 'CatalogItemsQueue', {
+  queueName: 'catalog-items-queue',
+});
+const createProductTopic = new sns.Topic(stack, 'CreateProductTopic', {
+  topicName: 'create-product-topic',
 });
 const sharedLambdaProps: Partial<NodejsFunctionProps> = {
   runtime: lambda.Runtime.NODEJS_18_X,
