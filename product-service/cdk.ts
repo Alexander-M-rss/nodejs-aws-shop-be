@@ -83,6 +83,30 @@ new sns.Subscription(stack, 'PrimarySubscription', {
   topic: createProductTopic,
 });
 
+if (process.env.LOW_STOCK_EMAIL) {
+  new sns.Subscription(stack, 'LowStockSubscription', {
+    endpoint: process.env.LOW_STOCK_EMAIL,
+    protocol: sns.SubscriptionProtocol.EMAIL,
+    topic: createProductTopic,
+    filterPolicy: {
+      count: sns.SubscriptionFilter.numericFilter({ lessThanOrEqualTo: 10 }),
+    },
+  });
+}
+
+if (process.env.ERROR_EMAIL) {
+  new sns.Subscription(stack, 'ErrorSubscription', {
+    endpoint: process.env.ERROR_EMAIL,
+    protocol: sns.SubscriptionProtocol.EMAIL,
+    topic: createProductTopic,
+    filterPolicy: {
+      isContainsError: sns.SubscriptionFilter.stringFilter({
+        allowlist: ['true'],
+      }),
+    },
+  });
+}
+
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
     allowHeaders: ['*'],
