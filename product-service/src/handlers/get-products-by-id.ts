@@ -1,6 +1,7 @@
-import { availableProducts } from '../mocks/data';
+import { getProductsById } from '../db/products';
 import { buildResponse } from './utils';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { validate } from 'uuid';
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -8,11 +9,13 @@ export const handler = async (
   try {
     const id = event.pathParameters?.productId;
 
-    if (!id) {
+    console.log(`GET products/${id}`);
+
+    if (!id || !validate(id)) {
       return buildResponse(404, 'Product not found');
     }
 
-    const product = availableProducts.find((product) => product.id === id);
+    const product = await getProductsById(id);
 
     if (!product) {
       return buildResponse(404, 'Product not found');
