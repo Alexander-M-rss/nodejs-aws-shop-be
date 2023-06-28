@@ -1,4 +1,4 @@
-# Import service
+# Authorization service
 
 Environment variables must be set in the `.env` file. You can see what variables are needed in `.env.example` file.
 
@@ -14,11 +14,7 @@ Deploys lambda functions to AWS.
 
 ### `cdk:remove`
 
-Removes Import service infrastructure from AWS.
-
-### `test`
-
-Runs unit tests.
+Removes Authorization service infrastructure from AWS.
 
 ### `lint`, `prettier`
 
