@@ -9,9 +9,11 @@ import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
 import 'dotenv/config';
 import * as s3notifications from 'aws-cdk-lib/aws-s3-notifications';
 import { Dir } from './src/handlers/constants';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 const BUCKET_NAME = process.env.BUCKET_NAME || '';
 const IMPORT_AWS_REGION = process.env.IMPORT_AWS_REGION || 'eu-west-1';
+const QUEUE_ARN = process.env.QUEUE_ARN || '';
 const API_PATH = 'import';
 const app = new cdk.App();
 const stack = new cdk.Stack(app, 'ImportServiceStack', {
@@ -37,11 +39,17 @@ const bucket = new s3.Bucket(stack, 'MyShopImportBucket', {
     },
   ],
 });
+const catalogItemsQueue = sqs.Queue.fromQueueArn(
+  stack,
+  'CatalogItemsQueue',
+  QUEUE_ARN,
+);
 const sharedLambdaProps: Partial<NodejsFunctionProps> = {
   runtime: lambda.Runtime.NODEJS_18_X,
   environment: {
     IMPORT_AWS_REGION,
     BUCKET_NAME,
+    QUEUE_URL: catalogItemsQueue.queueUrl,
   },
 };
 const importProductsFile = new NodejsFunction(
@@ -58,6 +66,9 @@ const importFileParser = new NodejsFunction(stack, 'ImportFileParserLambda', {
   functionName: 'importFileParser',
   entry: 'src/handlers/import-file-parser.ts',
 });
+
+catalogItemsQueue.grantSendMessages(importFileParser);
+
 const api = new apiGateway.RestApi(stack, 'ImportApi', {
   defaultCorsPreflightOptions: {
     allowHeaders: ['*'],

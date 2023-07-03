@@ -6,7 +6,10 @@ import {
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import 'dotenv/config';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 const API_PATH = 'products';
 const API_ROUTE = `/${API_PATH}`;
@@ -16,6 +19,12 @@ const stack = new cdk.Stack(app, 'ProductServiceStack', {
     region: process.env.PRODUCT_AWS_REGION || 'eu-west-1',
   },
 });
+const catalogItemsQueue = new sqs.Queue(stack, 'CatalogItemsQueue', {
+  queueName: 'catalog-items-queue',
+});
+const createProductTopic = new sns.Topic(stack, 'CreateProductTopic', {
+  topicName: 'create-product-topic',
+});
 const sharedLambdaProps: Partial<NodejsFunctionProps> = {
   runtime: lambda.Runtime.NODEJS_18_X,
   environment: {
@@ -24,6 +33,7 @@ const sharedLambdaProps: Partial<NodejsFunctionProps> = {
     PG_DB: process.env.PG_DB || '',
     PG_USER: process.env.PG_USER || '',
     PG_PASSWORD: process.env.PG_PASSWORD || '',
+    TOPIC_ARN: createProductTopic.topicArn,
   },
   bundling: {
     externalModules: [
@@ -53,6 +63,50 @@ const createProduct = new NodejsFunction(stack, 'CreateProductLambda', {
   functionName: 'createProduct',
   entry: 'src/handlers/create-product.ts',
 });
+const catalogBatchProcess = new NodejsFunction(
+  stack,
+  'CatalogBatchProcessLambda',
+  {
+    ...sharedLambdaProps,
+    functionName: 'catalogBatchProcess',
+    entry: 'src/handlers/catalog-batch-process.ts',
+  },
+);
+
+catalogBatchProcess.addEventSource(
+  new SqsEventSource(catalogItemsQueue, { batchSize: 5 }),
+);
+createProductTopic.grantPublish(catalogBatchProcess);
+new sns.Subscription(stack, 'PrimarySubscription', {
+  endpoint: process.env.PRIMARY_EMAIL || '',
+  protocol: sns.SubscriptionProtocol.EMAIL,
+  topic: createProductTopic,
+});
+
+if (process.env.LOW_STOCK_EMAIL) {
+  new sns.Subscription(stack, 'LowStockSubscription', {
+    endpoint: process.env.LOW_STOCK_EMAIL,
+    protocol: sns.SubscriptionProtocol.EMAIL,
+    topic: createProductTopic,
+    filterPolicy: {
+      count: sns.SubscriptionFilter.numericFilter({ lessThanOrEqualTo: 10 }),
+    },
+  });
+}
+
+if (process.env.ERROR_EMAIL) {
+  new sns.Subscription(stack, 'ErrorSubscription', {
+    endpoint: process.env.ERROR_EMAIL,
+    protocol: sns.SubscriptionProtocol.EMAIL,
+    topic: createProductTopic,
+    filterPolicy: {
+      isContainsError: sns.SubscriptionFilter.stringFilter({
+        allowlist: ['true'],
+      }),
+    },
+  });
+}
+
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
     allowHeaders: ['*'],
@@ -88,4 +142,8 @@ api.addRoutes({
 
 new cdk.CfnOutput(stack, 'ApiUrl', {
   value: `${api.url}${API_PATH}` ?? 'Something went wrong with the deployment.',
+});
+
+new cdk.CfnOutput(stack, 'CatalogItemsQueueArn', {
+  value: catalogItemsQueue.queueArn,
 });
