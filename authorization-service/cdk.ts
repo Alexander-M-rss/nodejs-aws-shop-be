@@ -2,15 +2,15 @@ import * as cdk from 'aws-cdk-lib';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dotenv from 'dotenv';
-import * as fs from 'fs';
 
-dotenv.config();
+const lambdaEnvironment: dotenv.DotenvPopulateInput = {};
 
-const lambdaEnvironment = dotenv.parse(fs.readFileSync('.env'));
+dotenv.config({ processEnv: lambdaEnvironment });
+
 const app = new cdk.App();
 const stack = new cdk.Stack(app, 'AuthorizationServiceStack', {
   env: {
-    region: process.env.AUTHORIZATION_AWS_REGION || 'eu-west-1',
+    region: lambdaEnvironment.AUTHORIZATION_AWS_REGION || 'eu-west-1',
   },
 });
 const basicAuthorizer = new NodejsFunction(stack, 'BasicAuthorizerLambda', {
