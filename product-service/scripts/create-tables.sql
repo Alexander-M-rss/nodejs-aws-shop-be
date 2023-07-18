@@ -5,6 +5,7 @@ create table products (
 	title text not null,
 	description text not null,
 	price integer not null
+	image_url varchar null
 );
 
 create table stocks (
