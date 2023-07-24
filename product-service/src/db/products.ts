@@ -18,6 +18,7 @@ export const createProduct = async (productData: CreateProductDTO) => {
     title: productData.title,
     description: productData.description,
     price: productData.price,
+    image_url: productData.image_url,
   };
   const newStock = {
     count: productData.count,

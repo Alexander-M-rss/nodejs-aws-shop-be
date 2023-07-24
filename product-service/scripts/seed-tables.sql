@@ -1,15 +1,15 @@
-insert into products (title, description, price)
+insert into products (title, description, price, image_url)
 values
-  ('The Pallbearer', 'Comedy', 72),
-  ('Nightcrawler', 'Crime|Drama|Thriller', 99),
-  ('Frankenstein''s Army', 'Action|Horror|Sci-Fi', 1),
-  ('Johnny Suede', 'Comedy|Musical|Romance', 69),
-  ('The Main Event', 'Comedy', 77),
-  ('Around the Bend', 'Drama', 18),
-  ('A Hole in My Heart', 'Drama', 10),
-  ('The Inbetweeners Movie', 'Adventure|Comedy', 64),
-  ('The Toast of New York', 'Comedy|Drama|War', 21),
-  ('Road House', 'Drama|Film-Noir', 94);
+  ('The Pallbearer', 'Comedy', 72, 'https://d2tbewbqvvmzls.cloudfront.net/images/the_pallbearer.jpg'),
+  ('Nightcrawler', 'Crime|Drama|Thriller', 99, 'https://d2tbewbqvvmzls.cloudfront.net/images/nightcrawler.jpg'),
+  ('Frankenstein''s Army', 'Action|Horror|Sci-Fi', 1, 'https://d2tbewbqvvmzls.cloudfront.net/images/frankensteins_army.jpg'),
+  ('Johnny Suede', 'Comedy|Musical|Romance', 69, 'https://d2tbewbqvvmzls.cloudfront.net/images/johnny_suede.jpg'),
+  ('The Main Event', 'Comedy', 77, 'https://d2tbewbqvvmzls.cloudfront.net/images/the_main_event.jpg'),
+  ('Around the Bend', 'Drama', 18, 'https://d2tbewbqvvmzls.cloudfront.net/images/around_the_bend.jpg'),
+  ('A Hole in My Heart', 'Drama', 10, 'https://d2tbewbqvvmzls.cloudfront.net/images/a_hole_in_my_heart.jpg'),
+  ('The Inbetweeners Movie', 'Adventure|Comedy', 64, 'https://d2tbewbqvvmzls.cloudfront.net/images/the_inbetweeners_movie.jpg'),
+  ('The Toast of New York', 'Comedy|Drama|War', 21, 'https://d2tbewbqvvmzls.cloudfront.net/images/the_toast_of_new_york.jpg'),
+  ('Road House', 'Drama|Film-Noir', 94, 'https://d2tbewbqvvmzls.cloudfront.net/images/road_house.jpg');
 
 insert into stocks (product_id, count)
 select p.id, s.count
